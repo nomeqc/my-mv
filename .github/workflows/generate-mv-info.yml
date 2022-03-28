@@ -36,7 +36,7 @@ jobs:
       run: |
         git config --global user.email nomeqc@gmail.com
         git config --global user.name Fallrainy
-        git add playlist cover
+        git add playlist cover playlist.json
         git commit -m "Update"
         # 暂存当前正在进行的工作
         git stash
