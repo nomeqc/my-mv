@@ -87,9 +87,12 @@ if __name__ == '__main__':
 
         # 获得文件更新时间
         cmd = f'git log -1 --format="%ad" -- "{filepath}"'
-        print(cmd)
         proc = os.popen(cmd)
-        timestamp = datetime.strptime(proc.read().strip(), '%a %b %d %H:%M:%S %Y %z').timestamp()
+        time_str = proc.read().strip()
+        if not time_str.strip():
+            timestamp = datetime.now().timestamp()
+        else:
+            timestamp = datetime.strptime(time_str, '%a %b %d %H:%M:%S %Y %z').timestamp()
         timestamp = int(timestamp)
         duration = parseDuration(filepath)
 
