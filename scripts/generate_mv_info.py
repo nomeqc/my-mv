@@ -86,7 +86,9 @@ if __name__ == '__main__':
         cover_url = encodeurl(cover_url)
 
         # 获得文件更新时间
-        proc = os.popen(f'git log -1 --format="%ad" -- "{filepath}"')
+        cmd = f'git log -1 --format="%ad" -- "{filepath}"'
+        print(cmd)
+        proc = os.popen(cmd)
         timestamp = datetime.strptime(proc.read().strip(), '%a %b %d %H:%M:%S %Y %z').timestamp()
         timestamp = int(timestamp)
         duration = parseDuration(filepath)
