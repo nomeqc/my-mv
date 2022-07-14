@@ -1,10 +1,10 @@
-from datetime import datetime
 import json
+import math
 import os
 import re
+from datetime import datetime
 from pathlib import Path
 from urllib import parse
-import math
 
 
 def updateEnv(name, value):
@@ -67,6 +67,29 @@ def parseDuration(filepath):
     return time_formated
 
 
+def get_time_from_m3u8(filepath):
+    text = Path(filepath).read_text(encoding='utf-8')
+    results = re.findall('https?://.+', text)
+    if not results:
+        return None
+    result = re.search(r'(\d{10,})', results[-1])
+    if not result:
+        return None
+    return int(result.group(1))
+
+
+def get_file_commit_time(filepath):
+    # 获得文件更新时间
+    cmd = f'git log -1 --format="%ad" -- "{filepath}"'
+    proc = os.popen(cmd)
+    time_str = proc.read().strip()
+    if not time_str.strip():
+        timestamp = datetime.now().timestamp()
+    else:
+        timestamp = datetime.strptime(time_str, '%a %b %d %H:%M:%S %Y %z').timestamp()
+    return int(timestamp)
+
+
 if __name__ == '__main__':
     tag = gen_new_tag()
     # 保存tag到环境变量 push时要用到
@@ -78,38 +101,30 @@ if __name__ == '__main__':
     for item in path.glob('*.m3u8'):
         mv_name = item.name.replace('.m3u8', '')
         filepath = item.as_posix()
-        url = parse.urljoin(
-            f'https://fastly.jsdelivr.net/gh/{repo_full}@{tag}/', filepath)
+        url = parse.urljoin(f'https://fastly.jsdelivr.net/gh/{repo_full}@{tag}/', filepath)
         url = encodeurl(url)
 
         cover_url = parse.urljoin(f'https://fastly.jsdelivr.net/gh/{repo_full}@{tag}/', f'cover/{item.stem}.jpg')
         cover_url = encodeurl(cover_url)
 
-        # 获得文件更新时间
-        cmd = f'git log -1 --format="%ad" -- "{filepath}"'
-        proc = os.popen(cmd)
-        time_str = proc.read().strip()
-        if not time_str.strip():
-            timestamp = datetime.now().timestamp()
-        else:
-            timestamp = datetime.strptime(time_str, '%a %b %d %H:%M:%S %Y %z').timestamp()
-        timestamp = int(timestamp)
         duration = parseDuration(filepath)
+        timestamp = get_time_from_m3u8(filepath)
+        if not timestamp:
+            timestamp = get_file_commit_time(filepath)
 
-        # print(timestamp)
-        raw_url = parse.urljoin(
-            f'https://raw.githubusercontent.com/{repo_full}/{branch}/',
-            filepath)
+        raw_url = parse.urljoin(f'https://raw.githubusercontent.com/{repo_full}/{branch}/', filepath)
         raw_url = encodeurl(raw_url)
-        infos.append({
-            'name': mv_name,
-            'url': url,
-            'cover_url': cover_url,
-            'raw_url': raw_url,
-            'filepath': filepath,
-            'timestamp': timestamp,
-            'duration': duration
-        })
+        infos.append(
+            {
+                'name': mv_name,
+                'url': url,
+                'cover_url': cover_url,
+                'raw_url': raw_url,
+                'filepath': filepath,
+                'timestamp': timestamp,
+                'duration': duration
+            }
+        )
     # 根据时间戳从大到小排序
     infos = sorted(infos, key=lambda e: e.__getitem__('timestamp'), reverse=True)
     mv_info = []
@@ -126,9 +141,5 @@ if __name__ == '__main__':
             f'- {name}&emsp;[![](https://static.dingtalk.com/media/lALPJwKtwnCxTnIUIQ_33_20.png)](http://tools.201992.xyz/m3u8-play.html#{url})&ensp;[![](https://static.dingtalk.com/media/lALPJxRxO6ipLPsUIQ_33_20.png)]({raw_url})'
         )
     md_lines.insert(0, f'# Fallrainy的MV(共 {len(mv_info)} 支)')
-    Path.write_text(Path('playlist.json'),
-                    json.dumps(mv_info, ensure_ascii=False, indent=4),
-                    encoding='utf-8')
-    Path.write_text(Path('playlist/README.md'),
-                    '\n'.join(md_lines),
-                    encoding='utf-8')
+    Path.write_text(Path('playlist.json'), json.dumps(mv_info, ensure_ascii=False, indent=4), encoding='utf-8')
+    Path.write_text(Path('playlist/README.md'), '\n'.join(md_lines), encoding='utf-8')
