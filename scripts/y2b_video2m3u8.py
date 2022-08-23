@@ -6,9 +6,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from opencc import OpenCC
-
-
-from video2m3u8 import video2m3u8, precheck
+from video2m3u8 import video2m3u8
 
 
 def simplify_filename(filepath=''):
@@ -40,6 +38,7 @@ def parse_inputs():
     parser = argparse.ArgumentParser()
     parser.add_argument('url', help='请输入youtube视频地址')
     parser.add_argument('res', help='请输入分辨率。支持的分辨率有：1080p 720p 480p 360p')
+    parser.add_argument('--name', help='指定标题', default='')
     args = parser.parse_args()
     return args
 
@@ -48,12 +47,15 @@ def main():
     args = parse_inputs()
     url = args.url
     res = args.res
-    if not precheck():
-        return
+    name = args.name
+
     with TemporaryDirectory(prefix='downloads_', dir=os.path.realpath('.')) as tmpdir:
         filepath = down_video(url, res, tmpdir)
+        if name.strip():
+            filepath.rename(filepath.with_stem(name))
         if not video2m3u8(str(filepath)):
             raise Exception('视频切片上传m3u8失败')
+        
     script = os.path.join(sys.path[0], 'generate_mv_info.py')
     cmd = f'{sys.executable} "{script}"'
     print(f'执行命令：{cmd}')

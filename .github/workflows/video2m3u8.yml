@@ -16,6 +16,10 @@ on:
           - 720p
           - 480p
           - 360p
+      name:
+        description: "指定视频标题："
+        default: ""
+        required: false
 
 env:
   TOOLS_PATH: /usr/local/bin/tools
@@ -73,11 +77,11 @@ jobs:
         run: |
           cp -f ${PRIVATE_REPO}/video2m3u8/video2m3u8.py ${MAIN_REPO}/scripts/video2m3u8.py
           cd "${MAIN_REPO}"
-          python scripts/y2b_video2m3u8.py "${URL}" "${RES}"
+          python scripts/y2b_video2m3u8.py "${URL}" "${NAME}"
         env:
           URL: ${{ github.event.inputs.url }}
           RES: ${{ github.event.inputs.res }}
-
+          NAME: ${{ github.event.inputs.name }}
       - name: Push changes
         run: |
           cd "${MAIN_REPO}"
