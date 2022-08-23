@@ -1,11 +1,15 @@
 import argparse
+import logging
 import os
 import re
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import requests
 from opencc import OpenCC
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
 from video2m3u8 import video2m3u8
 
 
@@ -55,7 +59,7 @@ def main():
             filepath.rename(filepath.with_stem(name))
         if not video2m3u8(str(filepath)):
             raise Exception('视频切片上传m3u8失败')
-        
+
     script = os.path.join(sys.path[0], 'generate_mv_info.py')
     cmd = f'{sys.executable} "{script}"'
     print(f'执行命令：{cmd}')
@@ -64,5 +68,22 @@ def main():
         raise Exception('出错了。。')
 
 
+def send_dingtalk_message(message: str):
+    try:
+        retries = Retry(total=3, allowed_methods=['GET', 'POST', 'PUT', 'HEAD'])
+    except TypeError:
+        retries = Retry(total=3, method_whitelist=['GET', 'POST', 'PUT', 'HEAD'])
+    adapter = HTTPAdapter(pool_connections=15, pool_maxsize=15, max_retries=retries)
+    session = requests.Session()
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    resp = session.post('https://api.201992.xyz/tools/dingtalk', data={'message': message}, timeout=20)
+    return resp.json()
+
+
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        logging.exception(e)
+        send_dingtalk_message(f'❌【y2b_video2m3u8】出错了：\n{e}')
