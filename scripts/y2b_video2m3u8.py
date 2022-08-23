@@ -56,7 +56,7 @@ def main():
     with TemporaryDirectory(prefix='downloads_', dir=os.path.realpath('.')) as tmpdir:
         filepath = down_video(url, res, tmpdir)
         if name.strip():
-            filepath.rename(filepath.with_stem(name))
+            filepath = filepath.rename(filepath.with_stem(name))
         if not video2m3u8(str(filepath)):
             raise Exception('视频切片上传m3u8失败')
 
