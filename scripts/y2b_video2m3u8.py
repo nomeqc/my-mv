@@ -10,7 +10,7 @@ import requests
 from opencc import OpenCC
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-from video2m3u8 import video2m3u8
+from video2m3u8 import check_cookie, video2m3u8
 
 
 def simplify_filename(filepath=''):
@@ -48,6 +48,8 @@ def parse_inputs():
 
 
 def main():
+    assert check_cookie(), 'wework cookie已失效'
+
     args = parse_inputs()
     url = args.url
     res = args.res
