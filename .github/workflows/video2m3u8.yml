@@ -75,10 +75,7 @@ jobs:
 
       - name: Run
         run: |
-          cp -f ${PRIVATE_REPO}/video2m3u8/video2m3u8.py ${MAIN_REPO}/scripts/video2m3u8.py
-          cp -f ${PRIVATE_REPO}/video2m3u8/wework.py ${MAIN_REPO}/scripts/wework.py
-          cp -f ${PRIVATE_REPO}/video2m3u8/xigua.py ${MAIN_REPO}/scripts/xigua.py
-          cp -f ${PRIVATE_REPO}/video2m3u8/prefix.png ${MAIN_REPO}/scripts/prefix.png
+          cp -fb ${PRIVATE_REPO}/video2m3u8/* ${MAIN_REPO}/scripts/
           cd "${MAIN_REPO}"
           python scripts/y2b_video2m3u8.py "${URL}" "${RES}" --name "${NAME}"
         env:
