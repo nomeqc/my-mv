@@ -18,7 +18,9 @@ def encodeurl(url=''):
 
 def gen_new_tag():
     # 获取当前分支最新tag
-    fp = os.popen('git describe --abbrev=0 --tags')
+    select_cmd = 'Select -First 1' if os.name == 'nt' else 'head -n 1'
+    fp = os.popen(f'git tag --sort=-v:refname -l "*.*.*" | {select_cmd}')
+    # fp = os.popen('git describe --abbrev=0 --tags')
     tag = fp.read().strip()
     major = 0
     minor = 0
