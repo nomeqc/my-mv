@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import sys
+from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -11,6 +12,16 @@ from opencc import OpenCC
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 from video2m3u8 import check_cookie, video2m3u8
+
+
+@contextmanager
+def cwd(path):
+    wd = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(wd)
 
 
 def simplify_filename(filepath=''):
@@ -24,18 +35,20 @@ def simplify_filename(filepath=''):
     return os.path.join(dirname, name)
 
 
-def down_video(url, res, dir) -> Path:
-    output_template = os.path.join(dir, '%(title)s.%(ext)s')
-
-    # 指定分辨率 并发3
-    cmd = f'yt-dlp -f "bv + ba / b / w" -S "res:{res},+codec:avc:m4a" -o "{output_template}" "{url}" --merge-output-format mp4 -N 3'
-    print(f'执行命令：{cmd}')
-    code = os.system(cmd)
-    if code != 0:
-        raise Exception('出错了！')
-    filepath = list(Path(dir).glob('*'))[0]
-    new_filepath = Path(simplify_filename(str(filepath)))
-    return filepath.rename(new_filepath)
+def download_youtube_video(url, res):
+    with TemporaryDirectory() as tmpdir:
+        pass
+    Path(tmpdir).mkdir(exist_ok=True, parents=True)
+    with cwd(tmpdir):
+        output_template = '%(title)s.%(ext)s'
+        cmd = f'yt-dlp -f "bv + ba / b / w" -S "res:{res},+codec:avc:m4a" -o "{output_template}" "{url}" --trim-filenames 80 --merge-output-format mp4 -N 3'
+        print(f'执行命令：{cmd}')
+        code = os.system(cmd)
+        if code != 0:
+            raise Exception(f'执行命令："{cmd}"出错了！')
+        filepath = list(Path(tmpdir).glob('*.mp4'))[0]
+        filepath = filepath.absolute()
+    return filepath
 
 
 def parse_inputs():
@@ -54,13 +67,11 @@ def main():
     url = args.url
     res = args.res
     name = args.name
-
-    with TemporaryDirectory(prefix='downloads_', dir=os.path.realpath('.')) as tmpdir:
-        filepath = down_video(url, res, tmpdir)
-        if name.strip():
-            filepath = filepath.rename(filepath.with_stem(name))
-        if not video2m3u8(str(filepath)):
-            raise Exception('视频切片上传m3u8失败')
+    filepath = download_youtube_video(url, res)
+    if name.strip():
+        filepath = filepath.rename(filepath.with_stem(name))
+    if not video2m3u8(str(filepath)):
+        raise Exception('视频切片上传m3u8失败')
 
     script = os.path.join(sys.path[0], 'generate_mv_info.py')
     cmd = f'{sys.executable} "{script}"'
