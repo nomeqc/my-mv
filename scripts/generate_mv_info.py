@@ -108,8 +108,8 @@ if __name__ == '__main__':
 
         # cover_url = parse.urljoin(f'https://cdn.jsdelivr.net/gh/{repo_full}@{tag}/', f'cover/{item.stem}.jpg')
         # cover_url = encodeurl(cover_url)
-
-        cover_url = parse.urljoin(f'https://raw.githubusercontents.com/{repo_full}/{branch}/', f'cover/{item.stem}.jpg')
+        timestamp = int(datetime.now().timestamp())
+        cover_url = parse.urljoin(f'https://raw.githubusercontents.com/{repo_full}/{branch}/', f'cover/{item.stem}.jpg?t={timestamp}')
         cover_url = encodeurl(cover_url)
 
         duration = parseDuration(filepath)
