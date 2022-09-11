@@ -103,10 +103,13 @@ if __name__ == '__main__':
     for item in path.glob('*.m3u8'):
         mv_name = item.name.replace('.m3u8', '')
         filepath = item.as_posix()
-        url = parse.urljoin(f'https://cdn.jsdelivr.net/gh/{repo_full}@{tag}/', filepath)
-        url = encodeurl(url)
+        # url = parse.urljoin(f'https://cdn.jsdelivr.net/gh/{repo_full}@{tag}/', filepath)
+        # url = encodeurl(url)
 
-        cover_url = parse.urljoin(f'https://cdn.jsdelivr.net/gh/{repo_full}@{tag}/', f'cover/{item.stem}.jpg')
+        # cover_url = parse.urljoin(f'https://cdn.jsdelivr.net/gh/{repo_full}@{tag}/', f'cover/{item.stem}.jpg')
+        # cover_url = encodeurl(cover_url)
+
+        cover_url = parse.urljoin(f'https://cdn.statically.io/gh/{repo_full}@{tag}/', f'cover/{item.stem}.jpg')
         cover_url = encodeurl(cover_url)
 
         duration = parseDuration(filepath)
@@ -116,6 +119,9 @@ if __name__ == '__main__':
 
         raw_url = parse.urljoin(f'https://raw.githubusercontent.com/{repo_full}/{branch}/', filepath)
         raw_url = encodeurl(raw_url)
+
+        url = raw_url.replace('https://raw.githubusercontent.com/', 'https://raw.fastgit.org/')
+
         infos.append(
             {
                 'name': mv_name,
