@@ -103,10 +103,10 @@ if __name__ == '__main__':
     for item in path.glob('*.m3u8'):
         mv_name = item.name.replace('.m3u8', '')
         filepath = item.as_posix()
-        url = parse.urljoin(f'https://fastly.jsdelivr.net/gh/{repo_full}@{tag}/', filepath)
+        url = parse.urljoin(f'https://cdn.jsdelivr.net/gh/{repo_full}@{tag}/', filepath)
         url = encodeurl(url)
 
-        cover_url = parse.urljoin(f'https://fastly.jsdelivr.net/gh/{repo_full}@{tag}/', f'cover/{item.stem}.jpg')
+        cover_url = parse.urljoin(f'https://cdn.jsdelivr.net/gh/{repo_full}@{tag}/', f'cover/{item.stem}.jpg')
         cover_url = encodeurl(cover_url)
 
         duration = parseDuration(filepath)
