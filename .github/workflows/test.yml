@@ -1,0 +1,97 @@
+name: "y2b video to m3u8   "
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "请输入youtube视频地址："
+        required: true
+      res:
+        description: "优先分辨率："
+        required: true
+        default: "1080p"
+        type: choice
+        options:
+          - 1080p
+          - 720p
+          - 480p
+          - 360p
+      name:
+        description: "指定视频标题："
+        default: ""
+        required: false
+
+env:
+  TOOLS_PATH: /usr/local/bin/tools
+  MAIN_REPO: main
+  PRIVATE_REPO: private-scripts
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          path: ${{ env.MAIN_REPO }}
+
+      - name: Checkout private scripts
+        uses: actions/checkout@v3
+        with:
+          repository: nomeqc/private-scripts
+          token: ${{ secrets.GH_PAT }} # `GH_PAT` is a secret that contains your PAT
+          path: ${{ env.PRIVATE_REPO }}
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+
+      - name: pip cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles(format('{0}/requirements.txt', env.MAIN_REPO)) }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: tools cache
+        id: tools-cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.TOOLS_PATH }}
+          key: ${{ runner.os }}-tools-${{ hashFiles(format('{0}/scripts/install.sh', env.MAIN_REPO)) }}
+          restore-keys: |
+            ${{ runner.os }}-tools-
+
+      - name: Install dependency
+        run: |
+          cd "${MAIN_REPO}"
+          bash scripts/install.sh
+        env:
+          TOOLS_CACHE_HIT: ${{ steps.tools-cache.outputs.cache-hit }}
+
+      - name: Run
+        run: |
+          cp -fb ${PRIVATE_REPO}/video2m3u8/* ${MAIN_REPO}/scripts/
+          cd "${MAIN_REPO}"
+          python scripts/y2b_video2m3u8.py "${URL}" "${RES}" --name "${NAME}"
+        env:
+          URL: ${{ github.event.inputs.url }}
+          RES: ${{ github.event.inputs.res }}
+          NAME: ${{ github.event.inputs.name }}
+      - name: Push changes
+        run: |
+          cd "${MAIN_REPO}"
+          git config --global user.email nomeqc@gmail.com
+          git config --global user.name Fallrainy
+          git add playlist cover playlist.json record.json
+          git commit -m "Update"
+          # 暂存当前正在进行的工作
+          git stash
+          git pull --rebase origin ${GITHUB_REF_NAME}
+          git push origin ${GITHUB_REF_NAME}
+          git tag ${{ env.new_tag }}
+          git push origin ${{ env.new_tag }}
