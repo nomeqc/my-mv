@@ -24,7 +24,7 @@ def main():
         cmd = f'{sys.executable} "{script_path}" "{url}" 1080p --name "{name}"'
         ret_code = os.system(cmd)
         assert ret_code == 0, '出错了×'
-        
+
 
 if __name__ == '__main__':
     try:
