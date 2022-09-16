@@ -20,8 +20,14 @@ on:
         description: "指定视频标题："
         default: ""
         required: false
+      enable_proxy:
+        description: "启用代理"
+        required: false
+        type: boolean
 
 env:
+  ENABLE_PROXY: ${{ github.event.inputs.enable_proxy }}
+  GITHUB_PROXY: ${{ secrets.GH_PROXY }}
   TOOLS_PATH: /usr/local/bin/tools
   MAIN_REPO: main
   PRIVATE_REPO: private-scripts
