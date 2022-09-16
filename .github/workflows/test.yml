@@ -1,4 +1,4 @@
-name: "y2b video to m3u8   "
+name: "batch video to m3u8   "
 
 on:
   workflow_dispatch:
