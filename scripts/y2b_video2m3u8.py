@@ -70,7 +70,7 @@ def main():
     filepath = download_youtube_video(url, res)
     if name.strip():
         filepath = filepath.rename(filepath.with_stem(name))
-    if not video2m3u8(str(filepath), 2):
+    if not video2m3u8(str(filepath), 5):
         raise Exception('视频切片上传m3u8失败')
 
     script = os.path.join(sys.path[0], 'generate_mv_info.py')
