@@ -36,12 +36,17 @@ def simplify_filename(filepath=''):
 
 
 def download_youtube_video(url, res):
+    proxy_args = ''
+    if 'bilibili.com' in url:
+        proxy = os.environ.get('GITHUB_PROXY', '')
+        proxy_args = f'--proxy "{proxy}"'
+
     with TemporaryDirectory() as tmpdir:
         pass
     Path(tmpdir).mkdir(exist_ok=True, parents=True)
     with cwd(tmpdir):
         output_template = '%(title)s.%(ext)s'
-        cmd = f'yt-dlp -f "bv + ba / b / w" -S "res:{res},+codec:avc:m4a" -o "{output_template}" "{url}" --trim-filenames 80 --merge-output-format mp4 -N 3'
+        cmd = f'yt-dlp {proxy_args} -f "bv + ba / b / w" -S "res:{res},+codec:avc:m4a" -o "{output_template}" "{url}" --trim-filenames 80 --merge-output-format mp4 -N 3'
         print(f'执行命令：{cmd}')
         code = os.system(cmd)
         if code != 0:
