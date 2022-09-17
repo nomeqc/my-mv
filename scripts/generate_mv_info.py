@@ -119,7 +119,7 @@ if __name__ == '__main__':
     path = Path('playlist')
     for item in path.glob('*.m3u8'):
         mv_name = item.name.replace('.m3u8', '')
-        filepath = item.absolute()
+        filepath = item.as_posix()
         # url = parse.urljoin(f'https://cdn.jsdelivr.net/gh/{repo_full}@{tag}/', filepath)
         # url = encodeurl(url)
 
@@ -135,7 +135,7 @@ if __name__ == '__main__':
             timestamp = get_file_commit_time(filepath)
             if not timestamp:
                 timestamp = int(datetime.now().timestamp())
-            update_time_for_name(filepath.stem, timestamp)
+            update_time_for_name(Path(filepath).stem, timestamp)
 
         raw_url = parse.urljoin(f'https://raw.githubusercontent.com/{repo_full}/{branch}/', filepath)
         raw_url = encodeurl(raw_url)
