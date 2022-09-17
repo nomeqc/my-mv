@@ -6,6 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from urllib import parse
 
+from recordmanager import get_update_time_by_name, update_time_for_name
+
 
 def updateEnv(name, value):
     os.popen(f'echo "{name}={value}" >> $GITHUB_ENV')
@@ -24,6 +26,11 @@ def json_from_file(filepath, default_value=None):
         except Exception:
             pass
     return default_value
+
+
+def json_write_file(obj, filepath):
+    with open(filepath, 'w', encoding='utf-8') as fp:
+        fp.write(json.dumps(obj, ensure_ascii=False, indent=4))
 
 
 def gen_new_tag():
@@ -79,7 +86,7 @@ def parseDuration(filepath):
     return time_formated
 
 
-def get_time_from_m3u8(filepath):
+def get_update_time(filepath):
     # text = Path(filepath).read_text(encoding='utf-8')
     # results = re.findall('https?://.+', text)
     # if not results:
@@ -88,12 +95,7 @@ def get_time_from_m3u8(filepath):
     # if not result:
     #     return None
     # return int(result.group(1))
-    record = json_from_file(Path(__file__).parent.with_name('record.json'))
-    name = Path(filepath).stem
-    for item in record:
-        if item.get('name') == name:
-            return item.get('update_time')
-    return None
+    return get_update_time_by_name(Path(filepath).stem)
 
 
 def get_file_commit_time(filepath):
@@ -101,11 +103,10 @@ def get_file_commit_time(filepath):
     cmd = f'git log -1 --format="%ad" -- "{filepath}"'
     proc = os.popen(cmd)
     time_str = proc.read().strip()
-    if not time_str.strip():
-        timestamp = datetime.now().timestamp()
-    else:
+    if time_str.strip():
         timestamp = datetime.strptime(time_str, '%a %b %d %H:%M:%S %Y %z').timestamp()
-    return int(timestamp)
+        return int(timestamp)
+    return None
 
 
 if __name__ == '__main__':
@@ -118,7 +119,7 @@ if __name__ == '__main__':
     path = Path('playlist')
     for item in path.glob('*.m3u8'):
         mv_name = item.name.replace('.m3u8', '')
-        filepath = item.as_posix()
+        filepath = item.absolute()
         # url = parse.urljoin(f'https://cdn.jsdelivr.net/gh/{repo_full}@{tag}/', filepath)
         # url = encodeurl(url)
 
@@ -129,9 +130,12 @@ if __name__ == '__main__':
         cover_url = encodeurl(cover_url)
 
         duration = parseDuration(filepath)
-        timestamp = get_time_from_m3u8(filepath)
+        timestamp = get_update_time(filepath)
         if not timestamp:
             timestamp = get_file_commit_time(filepath)
+            if not timestamp:
+                timestamp = int(datetime.now().timestamp())
+            update_time_for_name(filepath.stem, timestamp)
 
         raw_url = parse.urljoin(f'https://raw.githubusercontent.com/{repo_full}/{branch}/', filepath)
         raw_url = encodeurl(raw_url)
