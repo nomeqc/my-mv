@@ -16,6 +16,16 @@ def encodeurl(url=''):
     return parse.quote(url, safe='~@#$&()*!+=:;,.?/\'')
 
 
+def json_from_file(filepath, default_value=None):
+    for enc in ['utf-8', 'gbk']:
+        try:
+            with open(filepath, encoding=enc) as fp:
+                return json.loads(fp.read())
+        except Exception:
+            pass
+    return default_value
+
+
 def gen_new_tag():
     # 获取当前分支最新tag
     select_cmd = 'Select -First 1' if os.name == 'nt' else 'head -n 1'
@@ -70,14 +80,20 @@ def parseDuration(filepath):
 
 
 def get_time_from_m3u8(filepath):
-    text = Path(filepath).read_text(encoding='utf-8')
-    results = re.findall('https?://.+', text)
-    if not results:
-        return None
-    result = re.search(r'(\d{10,})', results[-1])
-    if not result:
-        return None
-    return int(result.group(1))
+    # text = Path(filepath).read_text(encoding='utf-8')
+    # results = re.findall('https?://.+', text)
+    # if not results:
+    #     return None
+    # result = re.search(r'(\d{10,})', results[-1])
+    # if not result:
+    #     return None
+    # return int(result.group(1))
+    record = json_from_file(Path(__file__).parent.with_name('record.json'))
+    name = Path(filepath).stem
+    for item in record:
+        if item.get('name') == name:
+            return item.get('update_time')
+    return None
 
 
 def get_file_commit_time(filepath):
