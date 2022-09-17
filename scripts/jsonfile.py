@@ -1,11 +1,11 @@
 import json
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Union
+from typing import Any, Generator, Union
 
 
 @contextmanager
-def jsonfile(filepath: Union[Path, str], default=None):
+def jsonfile(filepath: Union[Path, str], default=None) -> Generator[Any, None, None]:
     filepath = Path(filepath)
     object = default
     obj_copy = None
@@ -14,12 +14,10 @@ def jsonfile(filepath: Union[Path, str], default=None):
         import copy
         obj_copy = copy.deepcopy(object)
         yield object
-    except Exception as e:
-        print(e)
+    except Exception:
         yield object
     finally:
         if object != obj_copy:
-            print('write...')
             filepath.write_text(json.dumps(object, indent=4, ensure_ascii=False), encoding='utf-8')
 
 
