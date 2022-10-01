@@ -134,7 +134,7 @@ if __name__ == '__main__':
     playlist_dir = Path('playlist')
     for item in read_record():
         mv_name = item.get('name', '')
-        cover_url = item.get('cover_url')
+        cover_url = item.get('cover_url', '')
         filepath = str(playlist_dir.joinpath(f'{mv_name}.m3u8'))
         # url = parse.urljoin(f'https://cdn.jsdelivr.net/gh/{repo_full}@{tag}/', filepath)
         # url = encodeurl(url)

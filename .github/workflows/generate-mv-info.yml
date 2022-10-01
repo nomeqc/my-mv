@@ -5,43 +5,71 @@ name: Generate MV info
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
     paths:
-      - 'playlist/*.m3u8'
-      - 'scripts/generate_mv_info.py'
+      - "playlist/*.m3u8"
+      - "scripts/generate_mv_info.py"
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  MAIN_REPO: main
+  PRIVATE_REPO: private-scripts
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      - name: Checkout
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          path: ${{ env.MAIN_REPO }}
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-        
-    - name: Generate MV info
-      run: |
-        # 生成MV信息
-        python scripts/generate_mv_info.py
-        
-    - name: Push changes
-      run: |
-        git config --global user.email nomeqc@gmail.com
-        git config --global user.name Fallrainy
-        git add playlist cover playlist.json
-        git commit -m "Update"
-        # 暂存当前正在进行的工作
-        git stash
-        git pull --rebase origin ${GITHUB_REF_NAME}
-        git push origin ${GITHUB_REF_NAME}
-        git tag ${{ env.new_tag }}
-        git push origin ${{ env.new_tag }}
-        
+      - name: Checkout private scripts
+        uses: actions/checkout@v3
+        with:
+          repository: nomeqc/private-scripts
+          token: ${{ secrets.GH_PAT }} # `GH_PAT` is a secret that contains your PAT
+          path: ${{ env.PRIVATE_REPO }}
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: pip cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles(format('{0}/requirements.txt', env.MAIN_REPO)) }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependency
+        run: |
+          cd "${MAIN_REPO}"
+          if [[ -f $script_dir/requirements.txt ]]; then pip install -r $script_dir/requirements.txt; fi
+        env:
+          TOOLS_CACHE_HIT: ${{ steps.tools-cache.outputs.cache-hit }}
+
+      - name: Generate MV info
+        run: |
+          cp -fb ${PRIVATE_REPO}/video2m3u8/* ${MAIN_REPO}/scripts/
+          d "${MAIN_REPO}"
+          # 生成MV信息
+          python scripts/generate_mv_info.py
+
+      - name: Push changes
+        run: |
+          git config --global user.email nomeqc@gmail.com
+          git config --global user.name Fallrainy
+          git add playlist cover playlist.json
+          git commit -m "Update"
+          # 暂存当前正在进行的工作
+          git stash
+          git pull --rebase origin ${GITHUB_REF_NAME}
+          git push origin ${GITHUB_REF_NAME}
+          git tag ${{ env.new_tag }}
+          git push origin ${{ env.new_tag }}
