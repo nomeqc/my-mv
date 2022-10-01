@@ -63,9 +63,10 @@ jobs:
 
       - name: Push changes
         run: |
+          cd "${MAIN_REPO}"
           git config --global user.email nomeqc@gmail.com
           git config --global user.name Fallrainy
-          git add playlist cover playlist.json
+          git add playlist cover playlist.json record.json
           git commit -m "Update"
           # 暂存当前正在进行的工作
           git stash
