@@ -57,7 +57,7 @@ jobs:
       - name: Generate MV info
         run: |
           cp -fb ${PRIVATE_REPO}/video2m3u8/* ${MAIN_REPO}/scripts/
-          d "${MAIN_REPO}"
+          cd "${MAIN_REPO}"
           # 生成MV信息
           python scripts/generate_mv_info.py
 
