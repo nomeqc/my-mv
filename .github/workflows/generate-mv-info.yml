@@ -50,7 +50,7 @@ jobs:
       - name: Install dependency
         run: |
           cd "${MAIN_REPO}"
-          if [[ -f $script_dir/requirements.txt ]]; then pip install -r $script_dir/requirements.txt; fi
+          if [[ -f scripts/requirements.txt ]]; then pip install -r scripts/requirements.txt; fi
         env:
           TOOLS_CACHE_HIT: ${{ steps.tools-cache.outputs.cache-hit }}
 
