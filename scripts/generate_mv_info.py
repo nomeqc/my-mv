@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from urllib import parse
 
-from recordmanager import get_update_time_by_name, update_time_for_name
+from recordmanager import (get_update_time_by_name, read_record, sync_all_covers, update_time_for_name)
 
 
 def updateEnv(name, value):
@@ -109,24 +109,40 @@ def get_file_commit_time(filepath):
     return None
 
 
+def remove_unused_cover():
+    path = Path('cover')
+    for item in path.glob('*.jpg'):
+        if not Path('playlist').joinpath(f'{item.stem}.m3u8').exists():
+            item.unlink()
+
+
+def upload_cover():
+    sync_all_covers()
+
+
 if __name__ == '__main__':
     tag = gen_new_tag()
     # 保存tag到环境变量 push时要用到
     updateEnv('new_tag', tag)
     branch = os.environ.get('GITHUB_REF_NAME')
     repo_full = os.environ.get('GITHUB_REPOSITORY')
+
+    remove_unused_cover()
+    upload_cover()
+
     infos = []
-    path = Path('playlist')
-    for item in path.glob('*.m3u8'):
-        mv_name = item.name.replace('.m3u8', '')
-        filepath = item.as_posix()
+    playlist_dir = Path('playlist')
+    for item in read_record():
+        mv_name = item.get('name', '')
+        cover_url = item.get('cover_url')
+        filepath = str(playlist_dir.joinpath(f'{mv_name}.m3u8'))
         # url = parse.urljoin(f'https://cdn.jsdelivr.net/gh/{repo_full}@{tag}/', filepath)
         # url = encodeurl(url)
 
         # cover_url = parse.urljoin(f'https://cdn.jsdelivr.net/gh/{repo_full}@{tag}/', f'cover/{item.stem}.jpg')
         # cover_url = encodeurl(cover_url)
         timestamp = int(datetime.now().timestamp())
-        cover_url = parse.urljoin(f'https://raw.githubusercontents.com/{repo_full}/{branch}/', f'cover/{item.stem}.jpg?t={timestamp}')
+        # cover_url = parse.urljoin(f'https://raw.githubusercontents.com/{repo_full}/{branch}/', f'cover/{item.stem}.jpg?t={timestamp}')
         cover_url = encodeurl(cover_url)
 
         duration = parseDuration(filepath)

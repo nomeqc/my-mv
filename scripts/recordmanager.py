@@ -1,6 +1,17 @@
+import hashlib
 from pathlib import Path
 
+from dingtalkupload import upload_image
+
 from jsonfile import jsonfile
+
+
+def md5_for_file(filename, block_size=2**16):
+    md5 = hashlib.md5()
+    with open(filename, 'rb') as fp:
+        for chunk in iter(lambda: fp.read(block_size), b''):
+            md5.update(chunk)
+    return md5.hexdigest()
 
 
 def read_record() -> list:
@@ -51,3 +62,18 @@ def update_source_for_name(name, source):
 
 def update_time_for_name(name, update_time):
     update_item({'name': name, 'update_time': update_time})
+
+
+def sync_all_covers():
+    record_file = Path(__file__).parent.with_name('record.json')
+    assert record_file.exists(), f'记录文件不存在：{record_file.absolute()}'
+    cover_dir = Path('cover')
+    with jsonfile(record_file, []) as obj:
+        for item in obj:
+            name = item.get('name', '')
+            img_file = cover_dir.joinpath(f'{name}.jpg')
+            img_md5 = md5_for_file(img_file)
+            if img_md5 != item.get('cover_md5'):
+                cover_url = upload_image(str(img_file))
+                item['cover_url'] = cover_url
+                item['cover_md5'] = img_md5
