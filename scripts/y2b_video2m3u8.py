@@ -85,7 +85,7 @@ def simplify_filename(filepath=''):
 def convert_to_h264(filepath):
     filepath = Path(filepath)
     codec = get_video_codec(str(filepath))
-    if codec == 'h264':
+    if 'h264' in codec:
         return filepath
     new_filepath = filepath.with_stem(f'{filepath.stem}_h264')
     cmd = f'ffmpeg -i "{filepath}" -vcodec h264 "{new_filepath}"'
