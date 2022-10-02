@@ -1,4 +1,5 @@
 import hashlib
+from datetime import datetime
 from pathlib import Path
 
 from dingtalkupload import upload_image
@@ -51,6 +52,9 @@ def update_item(new_item: dict):
                 found_item = item
                 break
         if found_item:
+            new_source = new_item.get('source')
+            if new_source and new_source != found_item.get('source'):
+                new_item['update_time'] = int(datetime.now().timestamp())
             found_item.update(new_item)
         else:
             obj.append(new_item)

@@ -6,7 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from urllib import parse
 
-from recordmanager import (get_update_time_by_name, read_record, sync_all_covers, update_time_for_name)
+from recordmanager import (get_update_time_by_name, read_record,
+                           sync_all_covers, update_time_for_name)
 
 
 def updateEnv(name, value):
@@ -135,7 +136,11 @@ if __name__ == '__main__':
     for item in read_record():
         mv_name = item.get('name', '')
         cover_url = item.get('cover_url', '')
-        filepath = str(playlist_dir.joinpath(f'{mv_name}.m3u8'))
+        m3u8_filepath = playlist_dir.joinpath(f'{mv_name}.m3u8')
+        if not m3u8_filepath.exists():
+            continue
+        filepath = str(m3u8_filepath)
+
         # url = parse.urljoin(f'https://cdn.jsdelivr.net/gh/{repo_full}@{tag}/', filepath)
         # url = encodeurl(url)
 

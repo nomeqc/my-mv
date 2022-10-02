@@ -12,7 +12,7 @@ from opencc import OpenCC
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 from video2m3u8 import check_cookie, video2m3u8
-
+from recordmanager import update_item
 
 @contextmanager
 def cwd(path):
@@ -75,8 +75,14 @@ def main():
     filepath = download_youtube_video(url, res)
     if name.strip():
         filepath = filepath.rename(filepath.with_stem(name))
+    
+    before_filelist = list(Path('playlist').glob('*.m3u8'))
     if not video2m3u8(str(filepath), 5):
         raise Exception('视频切片上传m3u8失败')
+    after_filelist = list(Path('playlist').glob('*.m3u8'))
+    diff = list(set(after_filelist).difference(set(before_filelist)))
+    for item in diff:
+        update_item({'name': item.stem, "source": url})
 
     script = os.path.join(sys.path[0], 'generate_mv_info.py')
     cmd = f'{sys.executable} "{script}"'
