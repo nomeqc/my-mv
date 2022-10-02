@@ -6,13 +6,16 @@ import sys
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Tuple
 
 import requests
 from opencc import OpenCC
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 from video2m3u8 import check_cookie, video2m3u8
+
 from recordmanager import update_item
+
 
 @contextmanager
 def cwd(path):
@@ -24,6 +27,50 @@ def cwd(path):
         os.chdir(wd)
 
 
+def runcmd(cmd: str, shell=False, show_window=False) -> Tuple[str, int]:
+    try:
+        import shlex
+        import subprocess
+        args = cmd if shell else shlex.split(cmd)
+        startupinfo = None
+        if os.name == 'nt' and not shell and not show_window:
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        proc = subprocess.Popen(args, startupinfo=startupinfo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=shell)
+        stdout, _ = proc.communicate()
+        stdout = stdout.rstrip(b'\r\n')
+        output = None
+        try:
+            output = stdout.decode('UTF-8')
+        except Exception:
+            output = stdout.decode('GBK')
+        finally:
+            if output is None:
+                output = stdout.decode('UTF-8', errors='ignore')
+        returncode = proc.returncode
+    except Exception as e:
+        output = str(e)
+        returncode = 2
+    return output, returncode
+
+
+def get_video_codec(filepath: str) -> str:
+    """获取视频编码
+
+    Args:
+        filepath (str): 文件路径
+
+    Returns:
+        str: 视频编码
+    """
+    cmd = f'ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "{filepath}"'
+    output, returncode = runcmd(cmd)
+    if returncode != 0:
+        raise Exception(output)
+    output = output.strip()
+    return output
+
+
 def simplify_filename(filepath=''):
     dirname = os.path.dirname(filepath)
     basename = os.path.basename(filepath)
@@ -33,6 +80,18 @@ def simplify_filename(filepath=''):
     name = name if name else name_parts[0]
     name = f'{name}{name_parts[1]}'
     return os.path.join(dirname, name)
+
+
+def convert_to_h264(filepath):
+    filepath = Path(filepath)
+    codec = get_video_codec(str(filepath))
+    if codec == 'h264':
+        return filepath
+    new_filepath = filepath.with_stem(f'{filepath.stem}_h264')
+    cmd = f'ffmpeg -i "{filepath}" -vcodec h264 "{new_filepath}"'
+    returncode = os.system(cmd)
+    assert returncode == 0, f'执行命令："{cmd}"出错了！'
+    return new_filepath
 
 
 def download_youtube_video(url, res):
@@ -53,6 +112,7 @@ def download_youtube_video(url, res):
             raise Exception(f'执行命令："{cmd}"出错了！')
         filepath = list(Path(tmpdir).glob('*.mp4'))[0]
         filepath = filepath.absolute()
+        filepath = convert_to_h264(filepath)
     return filepath
 
 
@@ -75,7 +135,7 @@ def main():
     filepath = download_youtube_video(url, res)
     if name.strip():
         filepath = filepath.rename(filepath.with_stem(name))
-    
+
     before_filelist = list(Path('playlist').glob('*.m3u8'))
     if not video2m3u8(str(filepath), 5):
         raise Exception('视频切片上传m3u8失败')
