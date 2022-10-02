@@ -71,15 +71,13 @@ def get_video_codec(filepath: str) -> str:
     return output
 
 
-def simplify_filename(filepath=''):
-    dirname = os.path.dirname(filepath)
-    basename = os.path.basename(filepath)
-    name = OpenCC('t2s').convert(basename)
-    name_parts = os.path.splitext(os.path.basename(name))
-    name = re.sub(r'[「『【].+', '', name_parts[0])
-    name = name if name else name_parts[0]
-    name = f'{name}{name_parts[1]}'
-    return os.path.join(dirname, name)
+def simplify_filename(filepath):
+    filepath = Path(filepath)
+    stem = OpenCC('t2s').convert(filepath.stem)
+    stem = re.sub(r'[「『【].+', '', stem)
+    stem = stem if stem else filepath.stem
+    filepath = filepath.with_stem(stem)
+    return filepath
 
 
 def convert_to_h264(filepath):
@@ -112,6 +110,7 @@ def download_youtube_video(url, res):
             raise Exception(f'执行命令："{cmd}"出错了！')
         filepath = list(Path(tmpdir).glob('*.mp4'))[0]
         filepath = filepath.absolute()
+        filepath = simplify_filename(filepath)
         filepath = convert_to_h264(filepath)
     return filepath
 
