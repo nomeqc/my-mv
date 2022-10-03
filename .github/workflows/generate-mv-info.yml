@@ -55,9 +55,9 @@ jobs:
 
       - name: Generate MV info
         run: |
-          cd "${PRIVATE_REPO}"
+          cd "${MAIN_REPO}"
           # 生成MV信息
-          python video2m3u8/generate_mv_info.py
+          python ../${PRIVATE_REPO}/video2m3u8/generate_mv_info.py
 
       - name: Push changes
         run: |

@@ -1,10 +1,10 @@
-name: "y2b video to m3u8   "
+name: "MV to m3u8   "
 
 on:
   workflow_dispatch:
     inputs:
       url:
-        description: "请输入youtube视频地址："
+        description: "请输入youtube或bilibili视频地址："
         required: true
       res:
         description: "优先分辨率："
@@ -81,8 +81,8 @@ jobs:
 
       - name: Run
         run: |
-          cd "${PRIVATE_REPO}"
-          python video2m3u8/mv2m3u8.py "${URL}" "${RES}" --name "${NAME}"
+          cd "${MAIN_REPO}"
+          python ../${PRIVATE_REPO}/video2m3u8/mv2m3u8.py "${URL}" "${RES}" --name "${NAME}"
         env:
           URL: ${{ github.event.inputs.url }}
           RES: ${{ github.event.inputs.res }}
