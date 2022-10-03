@@ -8,7 +8,6 @@ on:
     branches: [master]
     paths:
       - "playlist/*.m3u8"
-      - "scripts/generate_mv_info.py"
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -43,23 +42,22 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles(format('{0}/requirements.txt', env.MAIN_REPO)) }}
+          key: ${{ runner.os }}-pip-${{ hashFiles(format('{0}/video2m3u8/requirements.txt', env.PRIVATE_REPO)) }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
       - name: Install dependency
         run: |
-          cd "${MAIN_REPO}"
-          if [[ -f scripts/requirements.txt ]]; then pip install -r scripts/requirements.txt; fi
+          cd "${PRIVATE_REPO}"
+          if [[ -f video2m3u8/requirements.txt ]]; then pip install -r video2m3u8/requirements.txt; fi
         env:
           TOOLS_CACHE_HIT: ${{ steps.tools-cache.outputs.cache-hit }}
 
       - name: Generate MV info
         run: |
-          cp -fb ${PRIVATE_REPO}/video2m3u8/* ${MAIN_REPO}/scripts/
-          cd "${MAIN_REPO}"
+          cd "${PRIVATE_REPO}"
           # 生成MV信息
-          python scripts/generate_mv_info.py
+          python video2m3u8/generate_mv_info.py
 
       - name: Push changes
         run: |

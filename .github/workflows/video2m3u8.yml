@@ -59,7 +59,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles(format('{0}/requirements.txt', env.MAIN_REPO)) }}
+          key: ${{ runner.os }}-pip-${{ hashFiles(format('{0}/video2m3u8/requirements.txt', env.PRIVATE_REPO)) }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
@@ -68,26 +68,26 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ${{ env.TOOLS_PATH }}
-          key: ${{ runner.os }}-tools-${{ hashFiles(format('{0}/scripts/install.sh', env.MAIN_REPO)) }}
+          key: ${{ runner.os }}-tools-${{ hashFiles(format('{0}/video2m3u8/install.sh', env.PRIVATE_REPO)) }}
           restore-keys: |
             ${{ runner.os }}-tools-
 
       - name: Install dependency
         run: |
-          cd "${MAIN_REPO}"
-          bash scripts/install.sh
+          cd "${PRIVATE_REPO}"
+          bash video2m3u8/install.sh
         env:
           TOOLS_CACHE_HIT: ${{ steps.tools-cache.outputs.cache-hit }}
 
       - name: Run
         run: |
-          cp -fb ${PRIVATE_REPO}/video2m3u8/* ${MAIN_REPO}/scripts/
-          cd "${MAIN_REPO}"
-          python scripts/y2b_video2m3u8.py "${URL}" "${RES}" --name "${NAME}"
+          cd "${PRIVATE_REPO}"
+          python video2m3u8/mv2m3u8.py "${URL}" "${RES}" --name "${NAME}"
         env:
           URL: ${{ github.event.inputs.url }}
           RES: ${{ github.event.inputs.res }}
           NAME: ${{ github.event.inputs.name }}
+
       - name: Push changes
         run: |
           cd "${MAIN_REPO}"
